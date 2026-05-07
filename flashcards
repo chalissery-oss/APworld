@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP World History Flashcards</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 2rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  }
+  .subtitle {
+    text-align: center;
+    margin-bottom: 24px;
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .unit-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .unit-btn:hover { background: rgba(255,255,255,0.3); }
+  .unit-btn.active { background: #ffd700; color: #1e3c72; font-weight: 600; }
+  .progress {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    opacity: 0.95;
+  }
+  .flashcard {
+    perspective: 1500px;
+    height: 380px;
+    margin-bottom: 24px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .flashcard.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .card-front {
+    background: linear-gradient(135deg, #fff 0%, #f0f4ff 100%);
+    color: #1e3c72;
+  }
+  .card-back {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+    color: #1e3c72;
+    transform: rotateY(180deg);
+    overflow-y: auto;
+  }
+  .unit-tag {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(30, 60, 114, 0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .card-hint {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-size: 0.75rem;
+    opacity: 0.6;
+  }
+  .term {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .definition {
+    font-size: 1rem;
+    line-height: 1.6;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .nav-btn {
+    background: #ffd700;
+    color: #1e3c72;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+    max-width: 200px;
+  }
+  .nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .shuffle-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .term { font-size: 1.4rem; }
+    .definition { font-size: 0.95rem; }
+    .flashcard { height: 340px; }
+    .card-face { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>AP World History: Modern</h1>
+  <p class="subtitle">Tap card to flip. Use buttons to navigate. Good luck tomorrow!</p>
+
+  <div class="controls" id="unitControls"></div>
+  <div class="progress" id="progress">Card 1 of 0</div>
+
+  <div class="flashcard" id="flashcard" onclick="flipCard()">
+    <div class="card-inner">
+      <div class="card-face card-front">
+        <div class="unit-tag" id="unitTagFront"></div>
+        <div class="term" id="term"></div>
+        <div class="card-hint">tap to flip</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="unit-tag" id="unitTagBack"></div>
+        <div class="definition" id="definition"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn" id="prevBtn" onclick="prevCard()">Previous</button>
+    <button class="nav-btn shuffle-btn" onclick="shuffleCards()">Shuffle</button>
+    <button class="nav-btn" id="nextBtn" onclick="nextCard()">Next</button>
+  </div>
+</div>
+
+<script>
+const allCards = [
+  // UNIT 1: The Global Tapestry (1200-1450)
+  { unit: "U1", term: "Song Dynasty", def: "Chinese dynasty (960-1279) known for economic prosperity, Neo-Confucianism, gunpowder, the magnetic compass, and a robust civil service exam system. Champa rice from Vietnam fueled population growth." },
+  { unit: "U1", term: "Neo-Confucianism", def: "Revival of Confucian thought during Song China that incorporated Buddhist and Daoist ideas. Emphasized filial piety, hierarchy, and education. Spread to Korea, Japan, and Vietnam." },
+  { unit: "U1", term: "Foot Binding", def: "Practice in Song China that restricted women's mobility, signaling elite status. Reflected the patriarchal nature of Confucian society." },
+  { unit: "U1", term: "Dar al-Islam", def: "The 'House of Islam' — regions where Islam was practiced. Expanded through trade, missionaries (Sufis), and military conquest from 1200-1450." },
+  { unit: "U1", term: "Delhi Sultanate", def: "Muslim state ruling much of India (1206-1526). Imposed jizya tax on non-Muslims; faced tension between Hindu majority and Muslim rulers." },
+  { unit: "U1", term: "Mali Empire", def: "West African empire (c.1235-1600) rich from gold and salt trade. Mansa Musa's 1324 hajj displayed Mali's wealth and spread Islam in West Africa." },
+  { unit: "U1", term: "Great Zimbabwe", def: "Powerful southern African kingdom (c.1100-1450) built on gold trade with Indian Ocean networks. Famous for massive stone enclosures." },
+  { unit: "U1", term: "Aztec Empire", def: "Mesoamerican empire centered at Tenochtitlan. Used tribute system, chinampas (floating gardens), and human sacrifice. Conquered by Cortés in 1521." },
+  { unit: "U1", term: "Inca Empire", def: "Andean empire using mit'a labor system, quipu (knotted cords for records), and an extensive road network. Conquered by Pizarro in 1533." },
+  { unit: "U1", term: "Feudalism", def: "Decentralized political/economic system in medieval Europe and Japan. Lords granted land (fiefs) to vassals in exchange for military service; serfs worked the land." },
+
+  // UNIT 2: Networks of Exchange (1200-1450)
+  { unit: "U2", term: "Silk Roads", def: "Overland Eurasian trade routes revived under the Mongols (Pax Mongolica). Spread luxury goods, technologies, religions, and the Black Death." },
+  { unit: "U2", term: "Mongol Empire", def: "Largest contiguous land empire in history, founded by Chinggis Khan. Facilitated Eurasian integration, religious tolerance, and the spread of ideas/disease." },
+  { unit: "U2", term: "Indian Ocean Trade", def: "Maritime trade network connecting East Africa, Middle East, India, SE Asia, and China. Used monsoon winds, dhows, and junks. Spread Islam and Swahili culture." },
+  { unit: "U2", term: "Swahili City-States", def: "East African coastal trading cities (Kilwa, Mombasa) blending Bantu and Arab cultures. Swahili language is Bantu with Arabic loanwords." },
+  { unit: "U2", term: "Trans-Saharan Trade", def: "Caravan trade across the Sahara using camels. Exchanged West African gold and slaves for North African salt and goods. Spread Islam." },
+  { unit: "U2", term: "Ibn Battuta", def: "Moroccan Muslim scholar (1304-1369) who traveled across Dar al-Islam, leaving detailed accounts of Mali, India, and China." },
+  { unit: "U2", term: "Marco Polo", def: "Venetian traveler whose accounts of Yuan China sparked European interest in Asian goods and routes." },
+  { unit: "U2", term: "Bubonic Plague (Black Death)", def: "Pandemic spread along Mongol trade routes 1346-1353. Killed ~1/3 of Europe; weakened feudalism and contributed to labor shortages." },
+  { unit: "U2", term: "Hanseatic League", def: "Commercial alliance of northern European trading cities. Dominated Baltic and North Sea trade." },
+  { unit: "U2", term: "Bills of Exchange", def: "Credit instruments developed by Muslim, Chinese, and European merchants that enabled long-distance trade without carrying coin." },
+
+  // UNIT 3: Land-Based Empires (1450-1750)
+  { unit: "U3", term: "Gunpowder Empires", def: "Ottoman, Safavid, Mughal, Ming/Qing, and Russian empires that used gunpowder weapons to expand and consolidate power." },
+  { unit: "U3", term: "Ottoman Empire", def: "Sunni Muslim Turkic empire (1299-1922). Captured Constantinople in 1453. Used devshirme system to recruit Janissaries from Christian boys." },
+  { unit: "U3", term: "Safavid Empire", def: "Shia Muslim Persian empire (1501-1736). Used Shi'ism to distinguish itself from Sunni Ottomans, creating lasting Sunni-Shia divisions." },
+  { unit: "U3", term: "Mughal Empire", def: "Muslim empire ruling India (1526-1857). Akbar promoted religious tolerance; Aurangzeb's intolerance contributed to decline. Built the Taj Mahal." },
+  { unit: "U3", term: "Devshirme", def: "Ottoman practice of taking Christian boys from the Balkans to convert and train as Janissaries (elite soldiers) or administrators." },
+  { unit: "U3", term: "Tokugawa Shogunate", def: "Japanese feudal military government (1603-1868). Enforced isolation (sakoku), strict class hierarchy, and stability." },
+  { unit: "U3", term: "Divine Right of Kings", def: "European doctrine claiming monarchs derived authority from God (e.g., Louis XIV of France). Justified absolute monarchy." },
+  { unit: "U3", term: "Mercantilism", def: "Economic theory that wealth = bullion. Nations sought favorable trade balances, colonies for raw materials, and protective tariffs." },
+  { unit: "U3", term: "Zamindars", def: "Mughal tax collectors who became powerful landlords. Their corruption helped weaken the empire." },
+  { unit: "U3", term: "Syncretism", def: "Blending of religions/cultures, e.g., Sikhism (Hindu-Muslim blend) and Vodun (West African + Catholic) in the Americas." },
+
+  // UNIT 4: Transoceanic Interconnections (1450-1750)
+  { unit: "U4", term: "Columbian Exchange", def: "Transfer of plants, animals, people, and diseases between the Old and New Worlds after 1492. Devastated Indigenous populations via smallpox; introduced potatoes, maize to Eurasia." },
+  { unit: "U4", term: "Caravel", def: "Maneuverable Portuguese ship combining lateen and square sails. Enabled Atlantic exploration." },
+  { unit: "U4", term: "Astrolabe", def: "Navigational tool measuring latitude using stars/sun. Adopted from Muslim sailors by Europeans." },
+  { unit: "U4", term: "Encomienda System", def: "Spanish labor system granting colonists the right to demand tribute and labor from Indigenous peoples. Replaced by hacienda and mit'a systems." },
+  { unit: "U4", term: "Atlantic Slave Trade", def: "Forced migration of ~12 million Africans to the Americas (16th-19th c.). Created Middle Passage; devastated African societies; built plantation economies." },
+  { unit: "U4", term: "Triangular Trade", def: "Atlantic trade route: European manufactured goods to Africa → enslaved Africans to Americas → cash crops (sugar, tobacco) to Europe." },
+  { unit: "U4", term: "Casta System", def: "Spanish colonial racial hierarchy: Peninsulares > Creoles > Mestizos > Mulattoes > Indigenous/Africans." },
+  { unit: "U4", term: "Joint-Stock Companies", def: "Businesses where investors share risk/profit (e.g., British East India Company, Dutch VOC). Enabled colonial ventures and global trade." },
+  { unit: "U4", term: "Maroon Communities", def: "Settlements of escaped enslaved people in the Americas (e.g., Palmares in Brazil). Resisted colonial control." },
+  { unit: "U4", term: "Treaty of Tordesillas (1494)", def: "Pope-mediated agreement dividing the New World between Spain and Portugal along a line west of the Cape Verde Islands." },
+
+  // UNIT 5: Revolutions (1750-1900)
+  { unit: "U5", term: "Enlightenment", def: "18th c. intellectual movement emphasizing reason, individual rights, and social contract (Locke, Rousseau, Voltaire). Inspired revolutions worldwide." },
+  { unit: "U5", term: "American Revolution (1776)", def: "Colonial revolt against Britain. Declaration of Independence drew on Enlightenment ideas; first major successful settler revolution." },
+  { unit: "U5", term: "French Revolution (1789)", def: "Overthrew French monarchy; produced Declaration of the Rights of Man. Spread nationalism and liberalism across Europe." },
+  { unit: "U5", term: "Haitian Revolution (1791-1804)", def: "Only successful slave revolt in history. Led by Toussaint L'Ouverture; established first Black republic." },
+  { unit: "U5", term: "Latin American Independence", def: "Wars (1810-1825) led by Bolívar, San Martín against Spain/Portugal. Creoles led most movements; outcomes preserved social hierarchies." },
+  { unit: "U5", term: "Industrial Revolution", def: "Began in Britain ~1750. Shift from agrarian to factory-based economies powered by coal/steam. Spread to Europe, US, Japan." },
+  { unit: "U5", term: "Why Britain?", def: "Coal/iron deposits, colonial markets/raw materials, agricultural surplus, navigable rivers, capital from Atlantic trade, and political stability." },
+  { unit: "U5", term: "Capitalism / Adam Smith", def: "Smith's 'Wealth of Nations' (1776) argued for free markets, division of labor, and the 'invisible hand' over mercantilism." },
+  { unit: "U5", term: "Marxism", def: "Karl Marx's critique of capitalism. 'Communist Manifesto' (1848) predicted proletariat revolution; influenced 20th c. revolutions." },
+  { unit: "U5", term: "Tanzimat Reforms", def: "Ottoman 19th c. reforms attempting to modernize the empire (legal equality, education, army). Limited success against decline." },
+  { unit: "U5", term: "Meiji Restoration (1868)", def: "Japan's rapid modernization/industrialization. Abolished samurai class, built railroads, adopted Western tech while preserving Japanese identity." },
+  { unit: "U5", term: "Self-Strengthening Movement", def: "Late Qing China's failed attempt to modernize while preserving Confucian traditions. Conservatism limited reform." },
+
+  // UNIT 6: Consequences of Industrialization (1750-1900)
+  { unit: "U6", term: "Imperialism", def: "Domination of one country over another's political, economic, or cultural life. New Imperialism (1870-1914) carved Africa and Asia into colonies." },
+  { unit: "U6", term: "Scramble for Africa", def: "European partition of Africa, formalized at the Berlin Conference (1884-85). By 1914, only Ethiopia and Liberia remained independent." },
+  { unit: "U6", term: "Social Darwinism", def: "Misapplication of 'survival of the fittest' to human societies. Used to justify imperialism and racial hierarchies." },
+  { unit: "U6", term: "White Man's Burden", def: "Rudyard Kipling's poem (1899) framing imperialism as a moral duty to 'civilize' non-Europeans. Propaganda for colonization." },
+  { unit: "U6", term: "Sepoy Mutiny (1857)", def: "Indian rebellion against British East India Company. Led to direct British rule (the Raj) over India." },
+  { unit: "U6", term: "Opium Wars (1839-42, 1856-60)", def: "Britain forced China to legalize opium trade. Treaty of Nanjing ceded Hong Kong; began China's 'century of humiliation.'" },
+  { unit: "U6", term: "Taiping Rebellion (1850-64)", def: "Massive Chinese civil war led by Hong Xiuquan (claimed to be Jesus' brother). Killed 20-30 million; weakened the Qing." },
+  { unit: "U6", term: "Boxer Rebellion (1899-1901)", def: "Anti-foreign, anti-Christian uprising in China. Crushed by Eight-Nation Alliance; further humiliated the Qing." },
+  { unit: "U6", term: "Indian National Congress", def: "Founded 1885; initially sought reform within British rule, later led independence movement." },
+  { unit: "U6", term: "Suez Canal (1869)", def: "Egyptian canal linking Mediterranean and Red Seas. Strategic for British control of India route; symbol of European technological imperialism." },
+  { unit: "U6", term: "Settler Colonies", def: "Colonies with significant European immigration (US, Canada, Australia, South Africa, Argentina). Often displaced Indigenous peoples." },
+  { unit: "U6", term: "Indentured Servitude", def: "Post-slavery labor system. Indians, Chinese laborers contracted for years on plantations across British Empire (e.g., Caribbean, Fiji)." },
+
+  // UNIT 7: Global Conflict (1900-present)
+  { unit: "U7", term: "Causes of WWI (M.A.I.N.)", def: "Militarism, Alliances (Triple Entente vs. Central Powers), Imperialism, Nationalism. Triggered by assassination of Archduke Franz Ferdinand (1914)." },
+  { unit: "U7", term: "Total War", def: "Mobilization of entire economies/societies for war. Civilians become targets; rationing, propaganda, women in workforce." },
+  { unit: "U7", term: "Treaty of Versailles (1919)", def: "Ended WWI. Imposed harsh reparations and 'war guilt' on Germany. Created League of Nations. Sowed seeds of WWII." },
+  { unit: "U7", term: "Russian Revolution (1917)", def: "Bolsheviks led by Lenin overthrew tsar; established world's first communist state (USSR)." },
+  { unit: "U7", term: "Great Depression (1929)", def: "Global economic collapse triggered by US stock market crash. Mass unemployment fueled rise of fascism and authoritarian regimes." },
+  { unit: "U7", term: "Fascism", def: "Authoritarian, ultranationalist ideology (Mussolini, Hitler, Franco). Emphasized state, race, militarism over individual rights." },
+  { unit: "U7", term: "Stalin's USSR", def: "Five-Year Plans industrialized USSR via state planning. Collectivization caused Ukrainian famine (Holodomor); Great Purge killed millions." },
+  { unit: "U7", term: "Causes of WWII", def: "Treaty of Versailles resentment, Great Depression, fascist aggression, appeasement (Munich 1938), failure of League of Nations." },
+  { unit: "U7", term: "Holocaust", def: "Nazi systematic genocide of 6 million Jews, plus Roma, disabled, LGBTQ+, others. Industrialized mass murder in death camps." },
+  { unit: "U7", term: "Atomic Bombs (Hiroshima/Nagasaki, 1945)", def: "First nuclear weapons used in war. Ended WWII; began nuclear age and Cold War arms race." },
+  { unit: "U7", term: "United Nations (1945)", def: "International organization replacing League of Nations. Aims to prevent war, promote human rights, with Security Council and General Assembly." },
+  { unit: "U7", term: "Armenian Genocide (1915-23)", def: "Ottoman Turkish government killed ~1.5 million Armenians during WWI. Often cited as the first modern genocide." },
+
+  // UNIT 8: Cold War and Decolonization (1900-present)
+  { unit: "U8", term: "Cold War", def: "1947-1991 ideological conflict between US (capitalism/democracy) and USSR (communism). No direct war, but proxy wars, nuclear arms race, space race." },
+  { unit: "U8", term: "Containment / Truman Doctrine", def: "US policy of stopping spread of communism (1947). Justified aid to Greece/Turkey and later interventions." },
+  { unit: "U8", term: "Marshall Plan (1948)", def: "US economic aid (~$13B) to rebuild Western Europe, contain communism, and create markets for US goods." },
+  { unit: "U8", term: "NATO vs. Warsaw Pact", def: "Cold War military alliances: NATO (US-led, 1949) vs. Warsaw Pact (Soviet-led, 1955). Divided Europe ideologically and militarily." },
+  { unit: "U8", term: "Korean War (1950-53)", def: "First Cold War proxy war. US-led UN forces vs. North Korea/China. Ended in stalemate at 38th parallel; Korea remains divided." },
+  { unit: "U8", term: "Vietnam War", def: "US intervention against communist North Vietnam (1955-75). Communist victory; major blow to US containment policy." },
+  { unit: "U8", term: "Cuban Missile Crisis (1962)", def: "13-day standoff over Soviet missiles in Cuba. Closest moment to nuclear war; led to hotline and arms control efforts." },
+  { unit: "U8", term: "Mahatma Gandhi", def: "Led Indian independence via satyagraha (nonviolent resistance). Salt March (1930) defied British monopoly. India independent 1947." },
+  { unit: "U8", term: "Partition of India (1947)", def: "British India split into Hindu-majority India and Muslim-majority Pakistan. Caused mass migration and ~1 million deaths." },
+  { unit: "U8", term: "African Decolonization", def: "Most African nations independent 1957-1975. Ghana (Nkrumah, 1957) first sub-Saharan colony freed. Borders often reflected colonial divisions." },
+  { unit: "U8", term: "Apartheid", def: "South African legal racial segregation (1948-1994). Mandela and ANC led resistance; ended with Mandela's election in 1994." },
+  { unit: "U8", term: "Chinese Communist Revolution (1949)", def: "Mao Zedong's CCP defeated Nationalists. Established PRC. Great Leap Forward and Cultural Revolution caused massive suffering." },
+  { unit: "U8", term: "Iranian Revolution (1979)", def: "Overthrew US-backed Shah; Ayatollah Khomeini established Islamic Republic. Major shift in Middle Eastern geopolitics." },
+  { unit: "U8", term: "Non-Aligned Movement", def: "Cold War-era alliance of nations (India, Egypt, Yugoslavia, Indonesia) refusing to align with US or USSR. Bandung Conference (1955)." },
+
+  // UNIT 9: Globalization (1900-present)
+  { unit: "U9", term: "Globalization", def: "Increasing interconnectedness of economies, cultures, and populations. Driven by tech (internet, container shipping), trade agreements, multinational corps." },
+  { unit: "U9", term: "Green Revolution", def: "Mid-20th c. agricultural innovations (high-yield seeds, fertilizers, irrigation). Increased food supply but caused environmental damage and inequality." },
+  { unit: "U9", term: "Multinational Corporations", def: "Companies operating in many countries (e.g., Coca-Cola, Toyota, Apple). Shape global economy, often outsource production to cheaper labor markets." },
+  { unit: "U9", term: "WTO / IMF / World Bank", def: "Bretton Woods institutions promoting global trade and development. Critics argue they impose harmful structural adjustment on poor nations." },
+  { unit: "U9", term: "European Union", def: "Economic/political union of European states (1993). Single market, common currency (euro for most members), open borders (Schengen)." },
+  { unit: "U9", term: "Climate Change", def: "Global warming from greenhouse gases, primarily fossil fuels. Major international concern; agreements include Kyoto Protocol, Paris Accord (2015)." },
+  { unit: "U9", term: "Fall of the Berlin Wall (1989)", def: "Symbolic end of Cold War. Eastern European communist regimes collapsed; USSR dissolved in 1991." },
+  { unit: "U9", term: "9/11 and War on Terror", def: "Al-Qaeda attacks on US (2001) led to US wars in Afghanistan and Iraq. Reshaped global security and Middle East politics." },
+  { unit: "U9", term: "Pandemic Disease", def: "HIV/AIDS, SARS, COVID-19 — globalization accelerates disease spread but also enables coordinated medical response." },
+  { unit: "U9", term: "Feminism (Second Wave)", def: "1960s-80s movement for workplace equality, reproductive rights. Expanded globally with UN Decade for Women (1976-85)." },
+  { unit: "U9", term: "Cultural Globalization", def: "Spread of consumer culture, English language, K-pop, Bollywood, sports. Critics fear cultural homogenization; others note local hybridization." },
+  { unit: "U9", term: "Migration Trends", def: "Increased movement: rural to urban, Global South to North, refugees from conflict. Created diasporas, remittance economies, and political backlash." },
+
+  // KEY HISTORICAL THINKING SKILLS
+  { unit: "Skills", term: "Continuity & Change Over Time", def: "Identify what stayed the same vs. changed across periods. E.g., patriarchy continued but women's roles shifted with industrialization." },
+  { unit: "Skills", term: "Comparison", def: "Identify similarities and differences across societies/periods. E.g., compare Ottoman vs. Mughal religious tolerance." },
+  { unit: "Skills", term: "Causation", def: "Distinguish between long-term causes, short-term causes/triggers, and effects. E.g., MAIN causes of WWI vs. assassination trigger." },
+  { unit: "Skills", term: "Contextualization", def: "Place events in broader historical context. E.g., understand French Revolution within Enlightenment and economic crisis." },
+  { unit: "Skills", term: "DBQ Tip", def: "Use 6+ documents, group by argument, contextualize, analyze HIPP (Historical situation, Intended audience, Purpose, POV) for at least 3, and bring in outside evidence." },
+  { unit: "Skills", term: "LEQ Tip", def: "Strong thesis with claim+reasoning, contextualization (broad opening sentence), 2 specific pieces of evidence per body paragraph, and complex understanding (nuance, multiple perspectives)." }
+];
+
+let cards = [...allCards];
+let currentIndex = 0;
+let activeUnit = "All";
+
+function renderUnitButtons() {
+  const units = ["All", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9", "Skills"];
+  const labels = {
+    "All": "All", "U1": "Unit 1", "U2": "Unit 2", "U3": "Unit 3",
+    "U4": "Unit 4", "U5": "Unit 5", "U6": "Unit 6", "U7": "Unit 7",
+    "U8": "Unit 8", "U9": "Unit 9", "Skills": "Skills"
+  };
+  const container = document.getElementById("unitControls");
+  container.innerHTML = units.map(u =>
+    `<button class="unit-btn ${u === activeUnit ? 'active' : ''}" onclick="filterUnit('${u}')">${labels[u]}</button>`
+  ).join("");
+}
+
+function filterUnit(unit) {
+  activeUnit = unit;
+  cards = unit === "All" ? [...allCards] : allCards.filter(c => c.unit === unit);
+  currentIndex = 0;
+  renderUnitButtons();
+  renderCard();
+}
+
+function renderCard() {
+  const card = cards[currentIndex];
+  if (!card) {
+    document.getElementById("term").textContent = "No cards";
+    document.getElementById("definition").textContent = "";
+    document.getElementById("progress").textContent = "0 of 0";
+    return;
+  }
+  const unitLabels = {
+    "U1": "Unit 1: 1200-1450", "U2": "Unit 2: 1200-1450",
+    "U3": "Unit 3: 1450-1750", "U4": "Unit 4: 1450-1750",
+    "U5": "Unit 5: 1750-1900", "U6": "Unit 6: 1750-1900",
+    "U7": "Unit 7: 1900-Pres", "U8": "Unit 8: 1900-Pres",
+    "U9": "Unit 9: 1900-Pres", "Skills": "Thinking Skills"
+  };
+  const label = unitLabels[card.unit] || card.unit;
+  document.getElementById("unitTagFront").textContent = label;
+  document.getElementById("unitTagBack").textContent = label;
+  document.getElementById("term").textContent = card.term;
+  document.getElementById("definition").textContent = card.def;
+  document.getElementById("progress").textContent = `Card ${currentIndex + 1} of ${cards.length}`;
+  document.getElementById("flashcard").classList.remove("flipped");
+  document.getElementById("prevBtn").disabled = currentIndex === 0;
+  document.getElementById("nextBtn").disabled = currentIndex === cards.length - 1;
+}
+
+function flipCard() {
+  document.getElementById("flashcard").classList.toggle("flipped");
+}
+
+function nextCard() {
+  if (currentIndex < cards.length - 1) {
+    currentIndex++;
+    renderCard();
+  }
+}
+
+function prevCard() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderCard();
+  }
+}
+
+function shuffleCards() {
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  currentIndex = 0;
+  renderCard();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") nextCard();
+  else if (e.key === "ArrowLeft") prevCard();
+  else if (e.key === " ") { e.preventDefault(); flipCard(); }
+});
+
+renderUnitButtons();
+renderCard();
+</script>
+</body>
+</html>
